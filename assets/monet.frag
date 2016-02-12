@@ -1,5 +1,7 @@
 #ifdef GL_ES
 precision highp float;
+#else
+#define highp // is this correct?
 #endif
 
 uniform sampler2D 		uTex0;

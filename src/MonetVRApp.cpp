@@ -95,6 +95,7 @@ void MonetVRApp::draw()
 {
     gl::clear();
     
+    gl::disableDepthWrite();
     gl::setMatricesWindow(this->getWindowSize());
     if ( mTexture) {
         gl::ScopedModelMatrix modelScope;
@@ -117,11 +118,14 @@ void MonetVRApp::draw()
 #endif
     }
     
+    gl::enableDepthRead();
+    gl::enableDepthWrite();
+
     gl::setMatrices( mCam );
     gl::multModelMatrix( mModelMatrix );
     
     gl::drawCoordinateFrame();
-    
+    gl::drawColorCube( vec3(), vec3( 0.3 ) );
 }
 
 CINDER_APP( MonetVRApp, RendererGl(RendererGl::Options().version(2, 0) ))
