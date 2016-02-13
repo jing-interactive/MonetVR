@@ -1,11 +1,10 @@
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
-#include "cinder/gl/GlslProg.h"
 #include "cinder/gl/gl.h"
-//#include "cinder/ImageIo.h"
 #include "cinder/Capture.h"
 #include "cinder/Log.h"
 #include "cinder/MotionManager.h"
+#include "AssetManager.h"
 
 #include "CinderOpenCv.h"
 
@@ -35,6 +34,7 @@ public:
     
     gl::TextureRef  mTexture;
     gl::GlslProgRef mGlsl;
+    gl::VboMeshRef  mMonster;
     
     mat4            mModelMatrix;
     CameraPersp     mCam;
@@ -60,15 +60,7 @@ void MonetVRApp::setup()
     mCam.lookAt( vec3( 0, 0, 3 ), vec3( 0 ) );
     
     // setup shader
-    try {
-        mGlsl = gl::GlslProg::create( gl::GlslProg::Format().vertex( loadAsset( "monet.vert" ) )
-                                     .fragment( loadAsset( "monet.frag" ) )
-                                     );
-    }
-    catch( gl::GlslProgCompileExc ex ) {
-        CI_LOG_EXCEPTION("glsl", ex);
-        quit();
-    }
+    mGlsl = am::glslProg("monet.vert", "monet.frag");
 }
 
 void MonetVRApp::update()
