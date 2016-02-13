@@ -15,13 +15,9 @@ uniform sampler2D 	uTex0;
 
 void main( void )
 {
-#if 1
-    vec3 color = texture2D( uTex0, vec2(ciTexCoord0.t, 1.0 - ciTexCoord0.s) ).rgb;
-#else
     vec3 color = texture2D( uTex0, ciTexCoord0 ).rgb;
-#endif
     vec4 pos = ciPosition;
-    pos.z += (color.r + color.g + color.b) * 0.1;
+    pos.z += dot(color, vec3(1.0));
 
     gl_Position	= ciModelViewProjection * pos;
     TexCoord0 	= ciTexCoord0;

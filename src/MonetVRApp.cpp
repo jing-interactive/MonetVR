@@ -1,3 +1,4 @@
+// https://github.com/momo-the-monster/Cinder-OculusRift/tree/master/src
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
@@ -67,7 +68,7 @@ void MonetVRApp::setupEyeInfos()
     int eyeCount = 0;
     for (auto& eyeInfo : mEyeInfos)
     {
-        float w = toPixels(getWindowWidth());
+        float w = toPixels(getWindowWidth()); // shorter edge
         float h = toPixels(getWindowHeight());
         
         if (eyeCount == MonoEye)
@@ -82,11 +83,11 @@ void MonetVRApp::setupEyeInfos()
         }
         else
         {
-            eyeInfo.viewport = {0,0,w,h/2};
+            eyeInfo.viewport = {0,h/2,w,h/2};
             eyeInfo.windowSize = {w,h/2};
         }
         
-        eyeInfo.camMatrix.setPerspective( 60, getWindowAspectRatio(), 1, 1000 );
+        eyeInfo.camMatrix.setPerspective( 60, eyeInfo.windowSize.x / (float)eyeInfo.windowSize.y, 1, 1000 );
         eyeInfo.camMatrix.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
         
         TriMesh triMesh;
@@ -102,8 +103,8 @@ void MonetVRApp::setupEyeInfos()
                 float x = u * mCaptureSize.x;
                 
 #define UNIT(m,n) \
-    triMesh.appendPosition(vec3((u+m*du), (v+n*dv), 0));\
-    triMesh.appendTexCoord(vec2(u+m*du, v+n*dv));
+    triMesh.appendPosition(vec3((v+n*dv)*4.8, (u+m*du)*6.4, 0));\
+    triMesh.appendTexCoord(vec2(1.0 - (u+m*du),  1.0- (v+n*dv)));
                 
                 /*
                  0,1  1,1
@@ -214,8 +215,8 @@ void MonetVRApp::drawFromEye(EyeType type)
 #if defined( CINDER_COCOA_TOUCH )
         // change iphone to landscape orientation
 //        gl::rotate( M_PI / 2 );
-        gl::translate( -2.5,-2.5,0 );
-        gl::scale(vec3(5));
+        gl::translate( -2.4, -3.2, 0 ); // TODO: magic number
+        gl::scale(vec3(1.0));
         
 //        Rectf flippedBounds( 0, 0, getWindowHeight(), getWindowWidth() );
 //        gl::draw( mCaptureTexture, flippedBounds );
@@ -241,10 +242,11 @@ void MonetVRApp::drawFromEye(EyeType type)
         
         gl::ScopedGlslProg glslProg(gl::getStockShader( gl::ShaderDef().texture().lambert()));
         am::texture("meshes/leprechaun_diffuse.jpg")->bind(0);
+#if 0
         am::texture("meshes/leprechaun_specular.jpg")->bind(1);
         am::texture("meshes/leprechaun_normal.jpg")->bind(2);
         am::texture("meshes/leprechaun_emmisive.png")->bind(3);
-        
+#endif
         gl::draw(am::vboMesh("meshes/leprechaun.msh"));
     }
 }
