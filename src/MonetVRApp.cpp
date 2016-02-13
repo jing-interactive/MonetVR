@@ -4,6 +4,8 @@
 #include "cinder/Capture.h"
 #include "cinder/Log.h"
 #include "cinder/MotionManager.h"
+#include "cinder/ip/Checkerboard.h"
+
 #include "AssetManager.h"
 
 #include "CinderOpenCv.h"
@@ -33,7 +35,7 @@ public:
         EyeCount,
     };
     
-    bool mIsStereo = true;
+    bool mIsStereo = false;
     
     void setup() override;
     void update() override;
@@ -47,14 +49,14 @@ public:
     gl::TextureRef  mCaptureTexture;
     ivec2           mCaptureSize;
     
-    gl::GlslProgRef     mGlsl;
+//    gl::GlslProgRef     mGlsl;
     
     mat4            mDeviceRotation;
     
     struct
     {
         CameraPersp         camMatrix;
-        gl::VertBatchRef   videoPlane;
+        gl::BatchRef           batch;
         ivec4           viewport;
         ivec2           windowSize;
     } mEyeInfos[EyeCount];
@@ -75,30 +77,54 @@ void MonetVRApp::setupEyeInfos()
         }
         else if (eyeCount == LeftEye)
         {
-            eyeInfo.viewport = {0,0,w/2,h};
-            eyeInfo.windowSize = {w/2,h};
+            eyeInfo.viewport = {0,0,w,h/2};
+            eyeInfo.windowSize = {w,h/2};
         }
         else
         {
-            eyeInfo.viewport = {w/2,0,w/2,h};
-            eyeInfo.windowSize = {w/2,h};
+            eyeInfo.viewport = {0,0,w,h/2};
+            eyeInfo.windowSize = {w,h/2};
         }
         
         eyeInfo.camMatrix.setPerspective( 60, getWindowAspectRatio(), 1, 1000 );
-        eyeInfo.camMatrix.lookAt( vec3( 0, 0, 3 ), vec3( 0 ) );
+        eyeInfo.camMatrix.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
         
-        eyeInfo.videoPlane = gl::VertBatch::create();
+        TriMesh triMesh;
         
-        for (int y=0;y<mCaptureSize.y;y++)
+        float du = 1.0 / 640;
+        float dv = 1.0 / 480;
+        
+        for (float v=0;v<=1-du;v+=dv)
         {
-            float v = y/(float)mCaptureSize.y;
-            for (int x=0;x<mCaptureSize.x;x++)
+            float y = v * mCaptureSize.y;
+            for (float u=0;u<=1-du;u+=du)
             {
-                float u = x/(float)mCaptureSize.x;
-                eyeInfo.videoPlane->vertex(x, y);
-                eyeInfo.videoPlane->texCoord(u, v);
+                float x = u * mCaptureSize.x;
+                
+#define UNIT(m,n) \
+    triMesh.appendPosition(vec3((u+m*du), 1-(v+n*dv), 0));\
+    triMesh.appendTexCoord(vec2(u+m*du, v+n*dv));
+                
+                /*
+                 0,1  1,1
+                 0,0  1,0
+                 // FrontFace: GL_CCW
+                */
+                UNIT(0,0);
+                UNIT(0,1);
+                UNIT(1,0);
+                
+                UNIT(1,0);
+                UNIT(1,1);
+                UNIT(0,1);
+#undef UNIT
             }
         }
+        
+//        auto glsl = gl::getStockShader( gl::ShaderDef().texture());
+        triMesh.recalculateNormals();
+        auto glsl = am::glslProg("shaders/monet.vert", "shaders/monet.frag");
+        eyeInfo.batch = gl::Batch::create(triMesh, glsl);
         
         eyeCount++;
     }
@@ -121,9 +147,6 @@ void MonetVRApp::setup()
     
     MotionManager::enable( 1000.0f/*, MotionManager::SensorMode::Accelerometer*/ );
     
-    // setup shader
-    mGlsl = am::glslProg("shaders/monet.vert", "shaders/monet.frag");
-    
     getWindow()->getSignalMouseDown().connect( [this]( MouseEvent event ) {
         mIsStereo = !mIsStereo;
     });
@@ -136,7 +159,7 @@ void MonetVRApp::update()
     if ( mCapture && mCapture->checkNewFrame() ) {
         if ( ! mCaptureTexture ) {
             // Capture images come back as top-down, and it's more efficient to keep them that way
-            mCaptureTexture = gl::Texture::create( *mCapture->getSurface(), gl::Texture::Format().loadTopDown() );
+            mCaptureTexture = gl::Texture::create( *mCapture->getSurface(), gl::Texture::Format() );
         }
         else {
             mCaptureTexture->update( *mCapture->getSurface() );
@@ -171,39 +194,45 @@ void MonetVRApp::drawFromEye(EyeType type)
     
     gl::ScopedViewport scopedViewport(eyeInfo.viewport.x, eyeInfo.viewport.y, eyeInfo.viewport.z, eyeInfo.viewport.w);
     
-    gl::disableDepthWrite();
-    gl::setMatricesWindow(eyeInfo.windowSize);
+    gl::enableDepthRead();
+    gl::enableDepthWrite();
+//    gl::setMatricesWindow(getWindowSize());
+    
+    gl::setMatrices( eyeInfo.camMatrix );
+
     if ( mCaptureTexture) {
         gl::ScopedModelMatrix modelScope;
-        gl::ScopedGlslProg glslProg( mGlsl );
+//        gl::ScopedGlslProg glslProg( gl::getStockShader( gl::ShaderDef().texture().color() ));
         
+#if 1
         mCaptureTexture->bind();
-        mGlsl->uniform( "uTex0", 0 );
+#else
+        am::texture("checkerboard.jpg")->bind(0);
+#endif
+//        mGlsl->uniform( "uTex0", 0 );
         
 #if defined( CINDER_COCOA_TOUCH )
         // change iphone to landscape orientation
-        gl::rotate( M_PI / 2 );
-        gl::translate( 0, - getWindowWidth() );
+//        gl::rotate( M_PI / 2 );
+//        gl::translate( 0, - getWindowWidth(), 5 );
+        gl::scale(vec3(5));
         
-        //        Rectf flippedBounds( 0, 0, getWindowHeight(), getWindowWidth() );
-        //        gl::draw( mTexture, flippedBounds );
-        //        gl::drawSolidRect( flippedBounds );
-        eyeInfo.videoPlane->draw();
+//        Rectf flippedBounds( 0, 0, getWindowHeight(), getWindowWidth() );
+//        gl::draw( mCaptureTexture, flippedBounds );
+//        gl::drawSolidRect( flippedBounds );
+        eyeInfo.batch->draw();
         
 #else
         gl::draw( mTexture );
 #endif
     }
-    
-    gl::enableDepthRead();
-    gl::enableDepthWrite();
-    
-    gl::setMatrices( eyeInfo.camMatrix );
+
     gl::multViewMatrix( mDeviceRotation );
     
     gl::drawCoordinateFrame();
     //    gl::drawColorCube( vec3(), vec3( 0.1 ) );
     
+    if (false)
     {
         gl::ScopedModelMatrix modelScope;
         gl::translate(0, 0, -3);
