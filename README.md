@@ -11,5 +11,5 @@ Progress
 ---------------
 
 ### 2015-02-14
-![](https://github.com/vnm-interactive/MonetVR/doc/2016-02-14.jpg)
+![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14.jpg)
 
