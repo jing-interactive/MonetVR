@@ -102,7 +102,7 @@ void MonetVRApp::setupEyeInfos()
                 float x = u * mCaptureSize.x;
                 
 #define UNIT(m,n) \
-    triMesh.appendPosition(vec3((u+m*du), 1-(v+n*dv), 0));\
+    triMesh.appendPosition(vec3((u+m*du), (v+n*dv), 0));\
     triMesh.appendTexCoord(vec2(u+m*du, v+n*dv));
                 
                 /*
@@ -159,7 +159,7 @@ void MonetVRApp::update()
     if ( mCapture && mCapture->checkNewFrame() ) {
         if ( ! mCaptureTexture ) {
             // Capture images come back as top-down, and it's more efficient to keep them that way
-            mCaptureTexture = gl::Texture::create( *mCapture->getSurface(), gl::Texture::Format() );
+            mCaptureTexture = gl::Texture::create( *mCapture->getSurface(), gl::Texture::Format().loadTopDown() );
         }
         else {
             mCaptureTexture->update( *mCapture->getSurface() );
@@ -214,7 +214,7 @@ void MonetVRApp::drawFromEye(EyeType type)
 #if defined( CINDER_COCOA_TOUCH )
         // change iphone to landscape orientation
 //        gl::rotate( M_PI / 2 );
-//        gl::translate( 0, - getWindowWidth(), 5 );
+        gl::translate( -2.5,-2.5,0 );
         gl::scale(vec3(5));
         
 //        Rectf flippedBounds( 0, 0, getWindowHeight(), getWindowWidth() );
@@ -232,12 +232,12 @@ void MonetVRApp::drawFromEye(EyeType type)
     gl::drawCoordinateFrame();
     //    gl::drawColorCube( vec3(), vec3( 0.1 ) );
     
-    if (false)
+    if (true)
     {
         gl::ScopedModelMatrix modelScope;
-        gl::translate(0, 0, -3);
+        gl::translate(0, 0, 0);
         
-        gl::scale(vec3(0.02));
+        gl::scale(vec3(0.05));
         
         gl::ScopedGlslProg glslProg(gl::getStockShader( gl::ShaderDef().texture().lambert()));
         am::texture("meshes/leprechaun_diffuse.jpg")->bind(0);
