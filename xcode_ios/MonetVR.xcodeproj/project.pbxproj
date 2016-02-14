@@ -19,6 +19,7 @@
 		3C08DF35BD1D420D96999810 /* CinderApp_ios.png in Resources */ = {isa = PBXBuildFile; fileRef = 276F77F0B9A94197901D2FF4 /* CinderApp_ios.png */; };
 		5E944EA22E50425B8BD97C9B /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0B11F393C10F404E91F7C1D0 /* CoreMotion.framework */; };
 		740471391C6E3EA300FFA9BD /* item.def in Resources */ = {isa = PBXBuildFile; fileRef = 740471381C6E3EA300FFA9BD /* item.def */; };
+		7408925B1C70BC8000DF9FA9 /* DistortionHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 740892591C70BC8000DF9FA9 /* DistortionHelper.cpp */; };
 		741A00BF1C6EFDF50079A082 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 741A00BA1C6EFDF50079A082 /* AssetManager.cpp */; };
 		741A00C01C6EFDF50079A082 /* MiniConfig.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 741A00BC1C6EFDF50079A082 /* MiniConfig.cpp */; };
 		AA91F566D8024A88BC8C684B /* MotionManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2E511F2D1B714E6282B09462 /* MotionManager.cpp */; };
@@ -51,6 +52,8 @@
 		2AEDA3F0E24C474893BB292F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2E511F2D1B714E6282B09462 /* MotionManager.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = MotionManager.cpp; path = ../../Cinder/blocks/MotionManager/src/cinder/MotionManager.cpp; sourceTree = "<group>"; };
 		740471381C6E3EA300FFA9BD /* item.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = item.def; path = ../include/item.def; sourceTree = "<group>"; };
+		740892591C70BC8000DF9FA9 /* DistortionHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DistortionHelper.cpp; path = "../../Cinder/blocks/Cinder-VNM/src/DistortionHelper.cpp"; sourceTree = "<group>"; };
+		7408925A1C70BC8000DF9FA9 /* DistortionHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DistortionHelper.h; path = "../../Cinder/blocks/Cinder-VNM/src/DistortionHelper.h"; sourceTree = "<group>"; };
 		741A00BA1C6EFDF50079A082 /* AssetManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssetManager.cpp; path = "../../Cinder/blocks/Cinder-VNM/src/AssetManager.cpp"; sourceTree = "<group>"; };
 		741A00BB1C6EFDF50079A082 /* AssetManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssetManager.h; path = "../../Cinder/blocks/Cinder-VNM/src/AssetManager.h"; sourceTree = "<group>"; };
 		741A00BC1C6EFDF50079A082 /* MiniConfig.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MiniConfig.cpp; path = "../../Cinder/blocks/Cinder-VNM/src/MiniConfig.cpp"; sourceTree = "<group>"; };
@@ -169,6 +172,8 @@
 		741A00B71C6EFDD60079A082 /* VNM */ = {
 			isa = PBXGroup;
 			children = (
+				740892591C70BC8000DF9FA9 /* DistortionHelper.cpp */,
+				7408925A1C70BC8000DF9FA9 /* DistortionHelper.h */,
 				741A00BA1C6EFDF50079A082 /* AssetManager.cpp */,
 				741A00BB1C6EFDF50079A082 /* AssetManager.h */,
 				74F4A0051C7071FE00B8DE31 /* CaptureHelper.h */,
@@ -304,6 +309,7 @@
 				DFD934A5D17C42C482B91D9D /* MonetVRApp.cpp in Sources */,
 				AA91F566D8024A88BC8C684B /* MotionManager.cpp in Sources */,
 				741A00C01C6EFDF50079A082 /* MiniConfig.cpp in Sources */,
+				7408925B1C70BC8000DF9FA9 /* DistortionHelper.cpp in Sources */,
 				C065ABFC56E34A9A97DA56F6 /* MotionImplCoreMotion.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

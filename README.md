@@ -10,8 +10,12 @@ Depends on
 Progress
 ---------------
 
-### 2015-02-14, the first preview, pseudo depth from image is ready.
+### 2015-02-14, the first preview, pseudo depth from image.
 ![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14.jpg)
 
-### 2015-02-14, the stereo rendering is far more better.
+### 2015-02-14, the stereo rendering w/o distortion.
 ![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14-night.jpg)
+
+### 2015-02-14, distortion shader is online.
+![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14-distortion.jpg)
+

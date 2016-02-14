@@ -11,6 +11,7 @@
 #include "AssetManager.h"
 #include "CaptureHelper.h"
 #include "MotionHelper.h"
+#include "DistortionHelper.h"
 
 #include "CinderOpenCv.h"
 
@@ -29,10 +30,22 @@ public:
         EyeCount,
     };
     
-    bool mIsStereo = true;
+    bool mIsStereo = false;
     
     void setup() override;
     void update() override;
+    
+    void resize() override
+    {
+        sizeInPixel.x = toPixels(getWindowWidth()); // shorter edge
+        sizeInPixel.y = toPixels(getWindowHeight());
+        
+        gl::Fbo::Format format;
+        format.enableDepthBuffer();
+        format.setSamples( 2 );
+        mFbo = gl::Fbo::create( sizeInPixel.x, sizeInPixel.y, format );
+    }
+    
     void cleanup() override
     {
         if (mLoadingThread)
@@ -44,10 +57,15 @@ public:
     void render(const CameraPersp& camera);
     void setupEyeInfos();
     
-
     CaptureHelper mCaptureHelper;
     MotionHelper mMotionHelper;
+    DistortionHelperRef mDistortionHelper;
+
+    //
+    // gl
+    //
     gl::VboMeshRef mMonster;
+    gl::FboRef mFbo;
     
     void setupLoadingThread();
     shared_ptr<thread>		mLoadingThread;
@@ -55,6 +73,8 @@ public:
 //    gl::GlslProgRef     mGlsl;
     
     gl::BatchRef           mBatch;
+    
+    vec2 sizeInPixel;
 };
 
 void MonetVRApp::setupLoadingThread()
@@ -117,6 +137,8 @@ void MonetVRApp::setup()
     mCaptureHelper.setup();
     mMotionHelper.setup();
     
+    mDistortionHelper = DistortionHelper::create( false );
+    
     getWindow()->getSignalMouseDown().connect( [this]( MouseEvent event ) {
         mIsStereo = !mIsStereo;
     });
@@ -136,25 +158,40 @@ void MonetVRApp::draw()
     gl::clear();
 
     CameraStereo camera;
-//    camera.setEyeSeparation( 0.5 );
+    camera.setEyeSeparation( 0.2 );
 //    camera.setConvergence(0);
 //    camera.setFov( 125.871f );
     camera.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
     
-    float w = toPixels(getWindowWidth()); // shorter edge
-    float h = toPixels(getWindowHeight());
+    float w = sizeInPixel.x;
+    float h = sizeInPixel.y;
     
     if (mIsStereo)
     {
-        camera.setPerspective( 60, w / 2 / h, 1, 1000 );
-
-        gl::ScopedViewport viewport(0,0,w/2,h);
-        camera.enableStereoLeft();
-        render(camera);
+        // 3d
+        {
+            gl::ScopedFramebuffer scopedFbo(mFbo);
+            gl::clear();
+            
+            camera.setPerspective( 60, w / 2 / h, 1, 1000 );
+            
+            // left
+            gl::ScopedViewport viewport(0,0,w/2,h);
+            camera.enableStereoLeft();
+            render(camera);
+            
+            // right
+            gl::viewport(w/2,0,w/2,h);
+            camera.enableStereoRight();
+            render(camera);
+        }
         
-        gl::viewport(w/2,0,w/2,h);
-        camera.enableStereoRight();
-        render(camera);
+        // Distortion Post-processing
+        gl::setMatricesWindow( getWindowSize(), false );
+        gl::disableDepthRead();
+        gl::disableDepthWrite();
+        
+        mDistortionHelper->render( mFbo->getColorTexture(), getWindowBounds());
     }
     else
     {
@@ -184,7 +221,7 @@ void MonetVRApp::render(const CameraPersp& camera)
 #endif
 //        mGlsl->uniform( "uTex0", 0 );
         
-        gl::scale(vec3(7, 7, 2));
+        gl::scale(vec3(7, 7, 1));
         mBatch->draw();
     }
 
@@ -199,7 +236,7 @@ void MonetVRApp::render(const CameraPersp& camera)
     {
         gl::ScopedModelMatrix modelScope;
         gl::multModelMatrix(mMotionHelper.deviceRotation);
-        gl::translate(0, 0, 5);
+        gl::translate(0, 0, 1);
         gl::scale(vec3(0.05));
         
         gl::ScopedGlslProg glslProg(gl::getStockShader( gl::ShaderDef().texture().lambert()));
