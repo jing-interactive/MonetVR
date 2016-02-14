@@ -29,7 +29,7 @@ public:
         EyeCount,
     };
     
-    bool mIsStereo = false;
+    bool mIsStereo = true;
     
     void setup() override;
     void update() override;
@@ -41,7 +41,7 @@ public:
     
     void draw() override;
     
-    void drawFromEye(EyeType type);
+    void render(const CameraPersp& camera);
     void setupEyeInfos();
     
 
@@ -55,13 +55,6 @@ public:
 //    gl::GlslProgRef     mGlsl;
     
     gl::BatchRef           mBatch;
-
-    struct
-    {
-        CameraPersp         camMatrix;
-        ivec4           viewport;
-        ivec2           windowSize;
-    } mEyeInfos[EyeCount];
 };
 
 void MonetVRApp::setupLoadingThread()
@@ -81,46 +74,19 @@ void MonetVRApp::setupLoadingThread()
 
 void MonetVRApp::setupEyeInfos()
 {
-    int eyeCount = 0;
-    for (auto& eyeInfo : mEyeInfos)
-    {
-        float w = toPixels(getWindowWidth()); // shorter edge
-        float h = toPixels(getWindowHeight());
-        
-        if (eyeCount == MonoEye)
-        {
-            eyeInfo.viewport = {0,0,w,h};
-            eyeInfo.windowSize = {w,h};
-        }
-        else if (eyeCount == LeftEye)
-        {
-            eyeInfo.viewport = {0,0,w,h/2};
-            eyeInfo.windowSize = {w,h/2};
-        }
-        else
-        {
-            eyeInfo.viewport = {0,h/2,w,h/2};
-            eyeInfo.windowSize = {w,h/2};
-        }
-        
-        eyeInfo.camMatrix.setPerspective( 60, eyeInfo.windowSize.x / (float)eyeInfo.windowSize.y, 1, 1000 );
-        eyeInfo.camMatrix.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
-        
-        eyeCount++;
-    }
-    
     TriMesh triMesh;
     
     float du = 1.0 / mCaptureHelper.size.x;
     float dv = 1.0 / mCaptureHelper.size.y;
-    
+    float aspect = mCaptureHelper.size.x / (float)mCaptureHelper.size.y;
+
     for (float v=0;v<=1-du;v+=dv)
     {
         for (float u=0;u<=1-du;u+=du)
         {
 #define UNIT(m,n) \
-triMesh.appendPosition(vec3((v+n*dv)*4.8, (u+m*du)*6.4, 0));\
-triMesh.appendTexCoord(vec2(1.0 - (u+m*du),  1.0- (v+n*dv)));
+triMesh.appendPosition(vec3((u+m*du-0.5)*aspect, (v+n*dv-0.5), 0));\
+triMesh.appendTexCoord(vec2((u+m*du),  1 - (v+n*dv)));
             
             /*
              0,1  1,1
@@ -168,29 +134,44 @@ void MonetVRApp::update()
 void MonetVRApp::draw()
 {
     gl::clear();
+
+    CameraStereo camera;
+//    camera.setEyeSeparation( 0.5 );
+//    camera.setConvergence(0);
+//    camera.setFov( 125.871f );
+    camera.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
+    
+    float w = toPixels(getWindowWidth()); // shorter edge
+    float h = toPixels(getWindowHeight());
     
     if (mIsStereo)
     {
-        drawFromEye(LeftEye);
-        drawFromEye(RightEye);
+        camera.setPerspective( 60, w / 2 / h, 1, 1000 );
+
+        gl::ScopedViewport viewport(0,0,w/2,h);
+        camera.enableStereoLeft();
+        render(camera);
+        
+        gl::viewport(w/2,0,w/2,h);
+        camera.enableStereoRight();
+        render(camera);
     }
     else
     {
-        drawFromEye(MonoEye);
+        camera.setPerspective( 60, w / h, 1, 1000 );
+
+        camera.disableStereo();
+        render(camera);
     }
 }
 
-void MonetVRApp::drawFromEye(EyeType type)
+void MonetVRApp::render(const CameraPersp& camera)
 {
-    auto& eyeInfo = mEyeInfos[type];
-    
-    gl::ScopedViewport scopedViewport(eyeInfo.viewport.x, eyeInfo.viewport.y, eyeInfo.viewport.z, eyeInfo.viewport.w);
-    
     gl::enableDepthRead();
     gl::enableDepthWrite();
 //    gl::setMatricesWindow(getWindowSize());
     
-    gl::setMatrices( eyeInfo.camMatrix );
+    gl::setMatrices( camera );
 
     if ( mCaptureHelper.isReady()) {
         gl::ScopedModelMatrix modelScope;
@@ -203,15 +184,8 @@ void MonetVRApp::drawFromEye(EyeType type)
 #endif
 //        mGlsl->uniform( "uTex0", 0 );
         
-#if defined( CINDER_COCOA_TOUCH )
-        gl::translate( -2.4, -3.2, 0 ); // TODO: magic number
-        gl::scale(vec3(1.0));
-        
+        gl::scale(vec3(7, 7, 2));
         mBatch->draw();
-        
-#else
-        gl::draw( mTexture );
-#endif
     }
 
 //    gl::multViewMatrix( mMotionHelper.deviceRotation );
@@ -219,7 +193,7 @@ void MonetVRApp::drawFromEye(EyeType type)
     gl::disableDepthRead();
     gl::drawCoordinateFrame();
     gl::enableDepthRead();
-    //    gl::drawColorCube( vec3(), vec3( 0.1 ) );
+//    gl::drawColorCube( vec3(), vec3( 3 ) );
     
     if (mMonster)
     {
