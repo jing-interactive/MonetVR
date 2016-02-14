@@ -214,16 +214,18 @@ void MonetVRApp::drawFromEye(EyeType type)
 #endif
     }
 
-    gl::multViewMatrix( mMotionHelper.deviceRotation );
+//    gl::multViewMatrix( mMotionHelper.deviceRotation );
     
+    gl::disableDepthRead();
     gl::drawCoordinateFrame();
+    gl::enableDepthRead();
     //    gl::drawColorCube( vec3(), vec3( 0.1 ) );
     
     if (mMonster)
     {
         gl::ScopedModelMatrix modelScope;
-        gl::translate(0, 0, 0);
-        
+        gl::multModelMatrix(mMotionHelper.deviceRotation);
+        gl::translate(0, 0, 5);
         gl::scale(vec3(0.05));
         
         gl::ScopedGlslProg glslProg(gl::getStockShader( gl::ShaderDef().texture().lambert()));
