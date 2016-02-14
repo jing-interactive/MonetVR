@@ -14,4 +14,4 @@ Progress
 ![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14.jpg)
 
 ### 2015-02-14, the stereo rendering is far more better.
-![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14.jpg)
+![](https://raw.githubusercontent.com/vnm-interactive/MonetVR/master/doc/2016-02-14-night.jpg)
