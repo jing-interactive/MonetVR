@@ -56,6 +56,8 @@
 		741A00BC1C6EFDF50079A082 /* MiniConfig.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MiniConfig.cpp; path = "../../Cinder/blocks/Cinder-VNM/src/MiniConfig.cpp"; sourceTree = "<group>"; };
 		741A00BD1C6EFDF50079A082 /* MiniConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MiniConfig.h; path = "../../Cinder/blocks/Cinder-VNM/src/MiniConfig.h"; sourceTree = "<group>"; };
 		741A00BE1C6EFDF50079A082 /* StateMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StateMachine.h; path = "../../Cinder/blocks/Cinder-VNM/src/StateMachine.h"; sourceTree = "<group>"; };
+		74F4A0051C7071FE00B8DE31 /* CaptureHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CaptureHelper.h; path = "../../Cinder/blocks/Cinder-VNM/src/CaptureHelper.h"; sourceTree = "<group>"; };
+		74F4A0061C7071FE00B8DE31 /* MotionHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MotionHelper.h; path = "../../Cinder/blocks/Cinder-VNM/src/MotionHelper.h"; sourceTree = "<group>"; };
 		7E78660A675B45D7AAB3337B /* MonetVRApp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.cpp; name = MonetVRApp.cpp; path = ../src/MonetVRApp.cpp; sourceTree = "<group>"; };
 		94B955F2561146DCB37BFE39 /* MotionImplCoreMotion.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = MotionImplCoreMotion.mm; path = ../../Cinder/blocks/MotionManager/src/cinder/MotionImplCoreMotion.mm; sourceTree = "<group>"; };
 		A11D469F2C154421924E868A /* Resources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../include/Resources.h; sourceTree = "<group>"; };
@@ -169,6 +171,8 @@
 			children = (
 				741A00BA1C6EFDF50079A082 /* AssetManager.cpp */,
 				741A00BB1C6EFDF50079A082 /* AssetManager.h */,
+				74F4A0051C7071FE00B8DE31 /* CaptureHelper.h */,
+				74F4A0061C7071FE00B8DE31 /* MotionHelper.h */,
 				741A00BC1C6EFDF50079A082 /* MiniConfig.cpp */,
 				741A00BD1C6EFDF50079A082 /* MiniConfig.h */,
 				741A00BE1C6EFDF50079A082 /* StateMachine.h */,

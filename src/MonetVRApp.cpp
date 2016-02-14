@@ -1,13 +1,16 @@
 // https://github.com/momo-the-monster/Cinder-OculusRift/tree/master/src
 #include "cinder/app/App.h"
-#include "cinder/app/RendererGl.h"
-#include "cinder/gl/gl.h"
-#include "cinder/Capture.h"
 #include "cinder/Log.h"
-#include "cinder/MotionManager.h"
 #include "cinder/ip/Checkerboard.h"
 
+// gl
+#include "cinder/app/RendererGl.h"
+#include "cinder/gl/gl.h"
+
+// VNM
 #include "AssetManager.h"
+#include "CaptureHelper.h"
+#include "MotionHelper.h"
 
 #include "CinderOpenCv.h"
 
@@ -15,16 +18,6 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
-static void printDevices()
-{
-    for ( const auto &device : Capture::getDevices() ) {
-        console() << "Device: " << device->getName() << " "
-#if defined( CINDER_COCOA_TOUCH )
-        << ( device->isFrontFacing() ? "Front" : "Rear" ) << "-facing"
-#endif
-        << endl;
-    }
-}
 
 class MonetVRApp : public App {
 public:
@@ -40,28 +33,51 @@ public:
     
     void setup() override;
     void update() override;
+    void cleanup() override
+    {
+        if (mLoadingThread)
+            mLoadingThread->join();
+    }
     
     void draw() override;
     
     void drawFromEye(EyeType type);
     void setupEyeInfos();
     
-    CaptureRef      mCapture;
-    gl::TextureRef  mCaptureTexture;
-    ivec2           mCaptureSize;
+
+    CaptureHelper mCaptureHelper;
+    MotionHelper mMotionHelper;
+    gl::VboMeshRef mMonster;
+    
+    void setupLoadingThread();
+    shared_ptr<thread>		mLoadingThread;
     
 //    gl::GlslProgRef     mGlsl;
     
-    mat4            mDeviceRotation;
-    
+    gl::BatchRef           mBatch;
+
     struct
     {
         CameraPersp         camMatrix;
-        gl::BatchRef           batch;
         ivec4           viewport;
         ivec2           windowSize;
     } mEyeInfos[EyeCount];
 };
+
+void MonetVRApp::setupLoadingThread()
+{
+    auto loadFn = [this]
+    {
+        auto triMesh = am::triMesh("meshes/leprechaun.msh");
+        
+        auto meshFn = [triMesh, this]
+        {
+            mMonster = gl::VboMesh::create(*triMesh);
+        };
+        dispatchAsync(meshFn);
+    };
+    mLoadingThread = shared_ptr<thread>( new thread( loadFn ) );
+}
 
 void MonetVRApp::setupEyeInfos()
 {
@@ -90,88 +106,63 @@ void MonetVRApp::setupEyeInfos()
         eyeInfo.camMatrix.setPerspective( 60, eyeInfo.windowSize.x / (float)eyeInfo.windowSize.y, 1, 1000 );
         eyeInfo.camMatrix.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
         
-        TriMesh triMesh;
-        
-        float du = 1.0 / 640;
-        float dv = 1.0 / 480;
-        
-        for (float v=0;v<=1-du;v+=dv)
-        {
-            float y = v * mCaptureSize.y;
-            for (float u=0;u<=1-du;u+=du)
-            {
-                float x = u * mCaptureSize.x;
-                
-#define UNIT(m,n) \
-    triMesh.appendPosition(vec3((v+n*dv)*4.8, (u+m*du)*6.4, 0));\
-    triMesh.appendTexCoord(vec2(1.0 - (u+m*du),  1.0- (v+n*dv)));
-                
-                /*
-                 0,1  1,1
-                 0,0  1,0
-                 // FrontFace: GL_CCW
-                */
-                UNIT(0,0);
-                UNIT(0,1);
-                UNIT(1,0);
-                
-                UNIT(1,0);
-                UNIT(1,1);
-                UNIT(0,1);
-#undef UNIT
-            }
-        }
-        
-//        auto glsl = gl::getStockShader( gl::ShaderDef().texture());
-        triMesh.recalculateNormals();
-        auto glsl = am::glslProg("shaders/monet.vert", "shaders/monet.frag");
-        eyeInfo.batch = gl::Batch::create(triMesh, glsl);
-        
         eyeCount++;
     }
+    
+    TriMesh triMesh;
+    
+    float du = 1.0 / mCaptureHelper.size.x;
+    float dv = 1.0 / mCaptureHelper.size.y;
+    
+    for (float v=0;v<=1-du;v+=dv)
+    {
+        for (float u=0;u<=1-du;u+=du)
+        {
+#define UNIT(m,n) \
+triMesh.appendPosition(vec3((v+n*dv)*4.8, (u+m*du)*6.4, 0));\
+triMesh.appendTexCoord(vec2(1.0 - (u+m*du),  1.0- (v+n*dv)));
+            
+            /*
+             0,1  1,1
+             0,0  1,0
+             // FrontFace: GL_CCW
+             */
+            UNIT(0,0);
+            UNIT(0,1);
+            UNIT(1,0);
+            
+            UNIT(1,0);
+            UNIT(1,1);
+            UNIT(0,1);
+#undef UNIT
+        }
+    }
+    
+    //        auto glsl = gl::getStockShader( gl::ShaderDef().texture());
+    triMesh.recalculateNormals();
+    auto glsl = am::glslProg("shaders/monet.vert", "shaders/monet.frag");
+    mBatch = gl::Batch::create(triMesh, glsl);
 }
 
 void MonetVRApp::setup()
 {
-    printDevices();
+    CaptureHelper::printDevices();
     
-    try {
-        mCapture = Capture::create( 640, 480 );
-        mCapture->start();
-        mCaptureSize = mCapture->getSize();
-    }
-    catch ( ci::Exception &exc ) {
-        CI_LOG_EXCEPTION( "Failed to init capture ", exc );
-    }
-    
-    CI_LOG_V( "gyro available: " << MotionManager::isGyroAvailable() );
-    
-    MotionManager::enable( 1000.0f/*, MotionManager::SensorMode::Accelerometer*/ );
+    mCaptureHelper.setup();
+    mMotionHelper.setup();
     
     getWindow()->getSignalMouseDown().connect( [this]( MouseEvent event ) {
         mIsStereo = !mIsStereo;
     });
 
     setupEyeInfos();
+    
+    setupLoadingThread();
 }
 
 void MonetVRApp::update()
 {
-    if ( mCapture && mCapture->checkNewFrame() ) {
-        if ( ! mCaptureTexture ) {
-            // Capture images come back as top-down, and it's more efficient to keep them that way
-            mCaptureTexture = gl::Texture::create( *mCapture->getSurface(), gl::Texture::Format().loadTopDown() );
-        }
-        else {
-            mCaptureTexture->update( *mCapture->getSurface() );
-        }
-    }
-    
-    if ( MotionManager::isEnabled() )
-    {
-        mDeviceRotation = inverse( MotionManager::getRotationMatrix() );
-    }
-    
+
 }
 
 void MonetVRApp::draw()
@@ -201,39 +192,34 @@ void MonetVRApp::drawFromEye(EyeType type)
     
     gl::setMatrices( eyeInfo.camMatrix );
 
-    if ( mCaptureTexture) {
+    if ( mCaptureHelper.isReady()) {
         gl::ScopedModelMatrix modelScope;
 //        gl::ScopedGlslProg glslProg( gl::getStockShader( gl::ShaderDef().texture().color() ));
         
 #if 1
-        mCaptureTexture->bind();
+        mCaptureHelper.texture->bind();
 #else
         am::texture("checkerboard.jpg")->bind(0);
 #endif
 //        mGlsl->uniform( "uTex0", 0 );
         
 #if defined( CINDER_COCOA_TOUCH )
-        // change iphone to landscape orientation
-//        gl::rotate( M_PI / 2 );
         gl::translate( -2.4, -3.2, 0 ); // TODO: magic number
         gl::scale(vec3(1.0));
         
-//        Rectf flippedBounds( 0, 0, getWindowHeight(), getWindowWidth() );
-//        gl::draw( mCaptureTexture, flippedBounds );
-//        gl::drawSolidRect( flippedBounds );
-        eyeInfo.batch->draw();
+        mBatch->draw();
         
 #else
         gl::draw( mTexture );
 #endif
     }
 
-    gl::multViewMatrix( mDeviceRotation );
+    gl::multViewMatrix( mMotionHelper.deviceRotation );
     
     gl::drawCoordinateFrame();
     //    gl::drawColorCube( vec3(), vec3( 0.1 ) );
     
-    if (true)
+    if (mMonster)
     {
         gl::ScopedModelMatrix modelScope;
         gl::translate(0, 0, 0);
@@ -247,7 +233,7 @@ void MonetVRApp::drawFromEye(EyeType type)
         am::texture("meshes/leprechaun_normal.jpg")->bind(2);
         am::texture("meshes/leprechaun_emmisive.png")->bind(3);
 #endif
-        gl::draw(am::vboMesh("meshes/leprechaun.msh"));
+        gl::draw(mMonster);
     }
 }
 
