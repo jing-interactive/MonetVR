@@ -30,7 +30,8 @@ public:
         EyeCount,
     };
     
-    bool mIsStereo = false;
+    bool mIsStereo = true;
+    bool mIsMonsterVisible = false;
     
     void setup() override;
     void update() override;
@@ -158,7 +159,7 @@ void MonetVRApp::draw()
     gl::clear();
 
     CameraStereo camera;
-    camera.setEyeSeparation( 0.2 );
+    camera.setEyeSeparation( 0.02 );
 //    camera.setConvergence(0);
 //    camera.setFov( 125.871f );
     camera.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
@@ -221,7 +222,7 @@ void MonetVRApp::render(const CameraPersp& camera)
 #endif
 //        mGlsl->uniform( "uTex0", 0 );
         
-        gl::scale(vec3(7, 7, 1));
+        gl::scale(vec3(7, 7, 1.5));
         mBatch->draw();
     }
 
@@ -232,7 +233,7 @@ void MonetVRApp::render(const CameraPersp& camera)
     gl::enableDepthRead();
 //    gl::drawColorCube( vec3(), vec3( 3 ) );
     
-    if (mMonster)
+    if (mMonster && mIsMonsterVisible)
     {
         gl::ScopedModelMatrix modelScope;
         gl::multModelMatrix(mMotionHelper.deviceRotation);
