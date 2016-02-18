@@ -32,7 +32,7 @@
     <ClCompile Include="..\src\MonetVRApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\Cinder\Cinder-OpenCV3\include\CinderOpenCV.h">
+    <ClInclude Include="..\..\Cinder\blocks\Cinder-OpenCV3\include\CinderOpenCV.h">
       <Filter>Blocks\OpenCV3\include</Filter>
     </ClInclude>
   </ItemGroup>
