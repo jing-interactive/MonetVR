@@ -43,7 +43,7 @@ public:
         
         gl::Fbo::Format format;
         format.enableDepthBuffer();
-        format.setSamples( 2 );
+//        format.setSamples( 2 );
         mFbo = gl::Fbo::create( sizeInPixel.x, sizeInPixel.y, format );
     }
     
