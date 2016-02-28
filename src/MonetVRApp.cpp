@@ -97,34 +97,33 @@ void MonetVRApp::setupEyeInfos()
 {
     TriMesh triMesh;
     
-    float du = 1.0 / mCaptureHelper.size.x * 10;
-    float dv = 1.0 / mCaptureHelper.size.y * 10;
-    float aspect = mCaptureHelper.size.x / (float)mCaptureHelper.size.y;
-
-    for (float v=0;v<=1-du;v+=dv)
-    {
-        for (float u=0;u<=1-du;u+=du)
-        {
-#define UNIT(m,n) \
-triMesh.appendPosition(vec3((u+m*du-0.5)*aspect, (v+n*dv-0.5), 0));\
-triMesh.appendTexCoord(vec2((u+m*du),  1 - (v+n*dv)));
-            
-            /*
-             0,1  1,1
-             0,0  1,0
-             // FrontFace: GL_CCW
-             */
-            UNIT(0,0);
-            UNIT(0,1);
-            UNIT(1,0);
-            
-            UNIT(1,0);
-            UNIT(0,1);
-            UNIT(1,1);
-#undef UNIT
+    int mVboWidth = mCaptureHelper.size.x;
+    int mVboHeight = mCaptureHelper.size.y;
+    
+    int dx = 2;
+    
+    for( int x = 0; x < mVboWidth; ++x ) {
+        for( int z = 0; z < mVboHeight; ++z ) {
+            // create a quad for each vertex, except for along the bottom and right edges
+            if (x % dx == 0 && z % dx == 0) {
+                if( ( x + dx < mVboWidth ) && ( z + dx < mVboHeight ) ) {
+                    uint32_t v00 = (x+0) * mVboHeight + (z+0);
+                    uint32_t v10 = (x+dx) * mVboHeight + (z+0);
+                    uint32_t v11 = (x+dx) * mVboHeight + (z+dx);
+                    uint32_t v01 = (x+0) * mVboHeight + (z+dx);
+                    triMesh.appendTriangle(v00, v01, v10);
+                    triMesh.appendTriangle(v10, v01, v11);
+                }
+            }
+            // the texture coordinates are mapped to [0,1.0)
+            triMesh.appendTexCoord( { x / (float)mVboWidth, 1 - (z / (float)mVboHeight) } );
+            float xp = ( x - mVboWidth * 0.5f );
+            float zp = ( z - mVboHeight * 0.5f );
+            float scale = 0.002f;
+            triMesh.appendPosition( { xp * scale, zp * scale, 0.0f } );
         }
     }
-    
+
     //        auto glsl = gl::getStockShader( gl::ShaderDef().texture());
     // triMesh.recalculateNormals();
     auto glsl = am::glslProg("shaders/monet.vert", "shaders/monet.frag");
@@ -147,6 +146,8 @@ void MonetVRApp::setup()
     setupEyeInfos();
     
     setupLoadingThread();
+    
+    gl::disableBlending();
 }
 
 void MonetVRApp::update()
@@ -159,7 +160,7 @@ void MonetVRApp::draw()
     gl::clear();
 
     CameraStereo camera;
-    camera.setEyeSeparation( 0.02 );
+    camera.setEyeSeparation( 0.015 );
 //    camera.setConvergence(0);
 //    camera.setFov( 125.871f );
     camera.lookAt( vec3( 0, 0, 10 ), vec3( 0 ) );
@@ -206,7 +207,7 @@ void MonetVRApp::draw()
 void MonetVRApp::render(const CameraPersp& camera)
 {
     gl::enableDepthRead();
-    gl::enableDepthWrite();
+//    gl::enableDepthWrite();
 //    gl::setMatricesWindow(getWindowSize());
     
     gl::setMatrices( camera );
