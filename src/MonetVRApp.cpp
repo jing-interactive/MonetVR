@@ -97,8 +97,8 @@ void MonetVRApp::setupEyeInfos()
 {
     TriMesh triMesh;
     
-    float du = 1.0 / mCaptureHelper.size.x;
-    float dv = 1.0 / mCaptureHelper.size.y;
+    float du = 1.0 / mCaptureHelper.size.x * 10;
+    float dv = 1.0 / mCaptureHelper.size.y * 10;
     float aspect = mCaptureHelper.size.x / (float)mCaptureHelper.size.y;
 
     for (float v=0;v<=1-du;v+=dv)
@@ -119,14 +119,14 @@ triMesh.appendTexCoord(vec2((u+m*du),  1 - (v+n*dv)));
             UNIT(1,0);
             
             UNIT(1,0);
-            UNIT(1,1);
             UNIT(0,1);
+            UNIT(1,1);
 #undef UNIT
         }
     }
     
     //        auto glsl = gl::getStockShader( gl::ShaderDef().texture());
-    triMesh.recalculateNormals();
+    // triMesh.recalculateNormals();
     auto glsl = am::glslProg("shaders/monet.vert", "shaders/monet.frag");
     mBatch = gl::Batch::create(triMesh, glsl);
 }
